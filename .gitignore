@@ -1,0 +1,10 @@
+.idea
+/vendor
+*.tar.gz
+/dist
+cover.out
+cover.html
+linkerd-checker
+*.tgz
+linkerd_checks_failure.json
+linkerd_checks_pass.json
