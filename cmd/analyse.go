@@ -3,9 +3,10 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 
-	"github.com/cheynewallace/tabby"
 	"github.com/nikhilsbhat/linkerd-checker/pkg/linkerd"
 	"github.com/spf13/cobra"
 )
@@ -23,10 +24,11 @@ func registerAnalyseCommand() *cobra.Command {
 			dec := json.NewDecoder(stdIn)
 			var failed bool
 
-			table := tabby.New()
-			table.AddHeader("Category", "Description", "Error", "Result")
+			if err := analyse.SetTable(); err != nil {
+				return fmt.Errorf("%w", err)
+			}
 
-			analyse.SetTable(table)
+			linkerdCheckErrors := make([]string, 0)
 
 			for {
 				config, err := linkerd.GetCheckConfig(dec)
@@ -39,7 +41,7 @@ func registerAnalyseCommand() *cobra.Command {
 
 				state, err := analyse.Analyse(config)
 				if err != nil {
-					cliLogger.Error(err)
+					linkerdCheckErrors = append(linkerdCheckErrors, err.Error())
 				}
 
 				if !state {
@@ -47,11 +49,17 @@ func registerAnalyseCommand() *cobra.Command {
 				}
 			}
 
+			analyse.SetStatus(failed)
+
 			if !failed {
 				cliLogger.Info("all linkerd checks have succeeded")
 			}
 
-			table.Print()
+			if len(linkerdCheckErrors) != 0 {
+				cliLogger.Errorf("linkerd checks failed with: %s", strings.Join(linkerdCheckErrors, "\n"))
+			}
+
+			analyse.Render()
 
 			return nil
 		},

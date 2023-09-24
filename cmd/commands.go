@@ -15,12 +15,8 @@ type cliCommands struct {
 
 // Config holds the information of the cli config.
 type Config struct {
-	JSON     bool   `yaml:"-"`
-	YAML     bool   `yaml:"-"`
 	NoColor  bool   `yaml:"-"`
 	LogLevel string `yaml:"-"`
-	FromFile string `yaml:"-"`
-	ToFile   string `yaml:"-"`
 }
 
 func SetLinkerdCheckerCommands() *cobra.Command {
