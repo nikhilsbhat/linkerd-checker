@@ -3,7 +3,6 @@ linters:
   disable-all: false
   enable-all: true
   disable:
-    - wsl
     - gochecknoglobals
     - tagliatelle
     - exhaustivestruct

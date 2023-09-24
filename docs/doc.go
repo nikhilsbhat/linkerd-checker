@@ -10,8 +10,7 @@ import (
 //go:generate go run github.com/nikhilsbhat/linkerd-checker/docs
 func main() {
 	commands := cmd.SetLinkerdCheckerCommands()
-	err := doc.GenMarkdownTree(commands, "doc")
-	if err != nil {
+	if err := doc.GenMarkdownTree(commands, "doc"); err != nil {
 		log.Fatal(err)
 	}
 }

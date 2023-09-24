@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 
 	"github.com/nikhilsbhat/linkerd-checker/version"
 	"github.com/spf13/cobra"
@@ -78,7 +81,21 @@ func AppVersion(_ *cobra.Command, _ []string) error {
 		cliLogger.Errorf("fetching version information of linkerd-checker errored with: %s", err.Error())
 		os.Exit(1)
 	}
-	fmt.Printf("linkerd-checker version: %s\n", string(buildInfo))
+
+	writer := bufio.NewWriter(os.Stdout)
+	versionInfo := fmt.Sprintf("%s \n", strings.Join([]string{"linkerd-checker version", string(buildInfo)}, ": "))
+
+	_, err = writer.WriteString(versionInfo)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	defer func(writer *bufio.Writer) {
+		err = writer.Flush()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}(writer)
 
 	return nil
 }
