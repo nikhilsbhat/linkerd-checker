@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/nikhilsbhat/linkerd-checker/pkg/linkerd"
@@ -39,13 +40,13 @@ func registerAnalyseCommand() *cobra.Command {
 					cliLogger.Fatalf("parsing the linkerd check's output errored with: '%s'", err.Error())
 				}
 
-				state, err := analyse.Analyse(config)
+				analyseFailed, err := analyse.Analyse(config)
 				if err != nil {
 					linkerdCheckErrors = append(linkerdCheckErrors, err.Error())
 				}
 
-				if !state {
-					failed = true
+				if analyseFailed {
+					failed = analyseFailed
 				}
 			}
 
@@ -60,6 +61,10 @@ func registerAnalyseCommand() *cobra.Command {
 			}
 
 			analyse.Render()
+
+			if failed {
+				os.Exit(1)
+			}
 
 			return nil
 		},

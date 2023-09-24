@@ -35,7 +35,7 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 				}
 			}
 
-			return false, &errors.CheckerError{Message: "analysing linkerd checks failed"}
+			return true, &errors.CheckerError{Message: "analysing linkerd checks failed"}
 		}
 
 		for _, category := range cfg.Categories {
@@ -44,7 +44,7 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 			}
 		}
 
-		return true, nil
+		return false, nil
 	}
 
 	var failed bool
@@ -55,11 +55,11 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 				continue
 			}
 
-			if !cfg.Success {
-				failed = true
-			}
-
 			for _, check := range cat.Checks {
+				if check.Result == "error" {
+					failed = true
+				}
+
 				if len(check.Error) != 0 {
 					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), trimSpace(check.Error), check.Result})
 				} else {
