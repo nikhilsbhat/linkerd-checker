@@ -14,8 +14,8 @@ import (
 func registerAnalyseCommand() *cobra.Command {
 	analyseCommand := &cobra.Command{
 		Use:     "analyse [flags]",
-		Short:   "Command to fetch the version of linkerd-checker installed",
-		Long:    `This will help user to find what version of linkerd-checker they are using in their machine.`,
+		Short:   "Command to analyse the linkerd check's outpur",
+		Long:    `This will help user to analyse the output of linkerd check [https://linkerd.io/2.14/reference/cli/check/].`,
 		PreRunE: setCLIClient,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliLogger.Debug("reading linkerd check's output from stdin")

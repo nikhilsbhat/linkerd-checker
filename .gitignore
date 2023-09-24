@@ -8,3 +8,4 @@ linkerd-checker
 *.tgz
 linkerd_checks_failure.json
 linkerd_checks_pass.json
+linkerd2-cli-stable-2.12.6-darwin

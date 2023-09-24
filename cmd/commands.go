@@ -48,7 +48,7 @@ func getRootCommand() *cobra.Command {
 	rootCommand := &cobra.Command{
 		Use:     "linkerd-checker",
 		Short:   "Command line interface to analyse the output of linkerd checks",
-		Long:    `Command line interface that takes the linkerd check json output and analyse them`,
+		Long:    `Command line interface that takes the linkerd check's' json output and analyse them based on the categories set`,
 		PreRunE: setCLIClient,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Usage() //nolint:wrapcheck
