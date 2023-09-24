@@ -47,7 +47,7 @@ Updated documentation on all available commands and flags can be found [here](ht
 
 ## Installation
 
-* Recommend installing released versions. Release binaries are available on the [releases](https://github.com/nikhilsbhat/linkerd-checker/releases) page and docker from [here](https://hub.docker.com/repository/docker/basnik/linkerd-checker).
+* Recommend installing released versions. Release binaries are available on the [releases](https://github.com/nikhilsbhat/linkerd-checker/releases) page.
 * Can always build it locally by running `go build` against cloned repo.
 
 #### Docker
