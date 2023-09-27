@@ -17,6 +17,8 @@ func registerGlobalFlags(cmd *cobra.Command) {
 		"CSV file to which the output needs to be written")
 	cmd.PersistentFlags().BoolVarP(&analyse.All, "all", "", false,
 		"enable this to Render output in JSON format")
-	cmd.PersistentFlags().StringSliceVarP(&analyse.Category, "category", "", nil,
+	cmd.PersistentFlags().StringSliceVarP(&analyse.Components, "linkerd-component", "", nil,
 		"categories from the output to be analysed")
+
+	cmd.MarkFlagsMutuallyExclusive("all", "linkerd-component")
 }

@@ -12,12 +12,12 @@ import (
 )
 
 type Analyse struct {
-	All      bool
-	Category []string
-	State    string
-	File     string
-	table    *tablewriter.Table
-	logger   *logrus.Logger
+	All        bool
+	Components []string
+	State      string
+	File       string
+	table      *tablewriter.Table
+	logger     *logrus.Logger
 }
 
 func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
@@ -49,7 +49,7 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 
 	var failed bool
 
-	for _, category := range analyse.Category {
+	for _, category := range analyse.Components {
 		for _, cat := range cfg.Categories {
 			if cat.Name != category {
 				continue
@@ -99,7 +99,7 @@ func (analyse *Analyse) SetTable() error {
 		table = tablewriter.NewWriter(fileWriter)
 	}
 
-	table.SetHeader([]string{"Category", "Description", "Error Message", "Result"})
+	table.SetHeader([]string{"Components", "Description", "Error Message", "Result"})
 	analyse.table = table
 
 	return nil
