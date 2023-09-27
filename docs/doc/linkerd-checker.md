@@ -17,6 +17,7 @@ linkerd-checker [flags]
   -h, --help                        help for linkerd-checker
       --linkerd-component strings   categories from the output to be analysed
   -l, --log-level string            log level for gocd cli, log levels supported by [https://github.com/sirupsen/logrus] will work (default "info")
+      --no-color                    when enabled does not color encode the output
       --to-file string              CSV file to which the output needs to be written
 ```
 

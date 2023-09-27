@@ -13,6 +13,8 @@ var (
 func registerGlobalFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&cliCfg.LogLevel, "log-level", "l", "info",
 		"log level for gocd cli, log levels supported by [https://github.com/sirupsen/logrus] will work")
+	cmd.PersistentFlags().BoolVarP(&analyse.NoColor, "no-color", "", false,
+		"when enabled does not color encode the output")
 	cmd.PersistentFlags().StringVarP(&analyse.File, "to-file", "", "",
 		"CSV file to which the output needs to be written")
 	cmd.PersistentFlags().BoolVarP(&analyse.All, "all", "", false,

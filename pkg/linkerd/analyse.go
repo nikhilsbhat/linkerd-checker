@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/nikhilsbhat/linkerd-checker/pkg/errors"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
@@ -13,12 +14,20 @@ import (
 
 type Analyse struct {
 	All        bool
+	NoColor    bool
 	Components []string
 	State      string
 	File       string
 	table      *tablewriter.Table
 	logger     *logrus.Logger
 }
+
+const (
+	StateSuccess = "success"
+	StateFailure = "failed"
+	StateWarning = "warning"
+	StateError   = "error"
+)
 
 func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 	if analyse.All {
@@ -28,9 +37,9 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 			for _, category := range cfg.Categories {
 				for _, check := range category.Checks {
 					if len(check.Error) != 0 {
-						analyse.table.Append([]string{category.Name, trimSpace(check.Description), trimSpace(check.Error), check.Result})
+						analyse.table.Append([]string{category.Name, trimSpace(check.Description), trimSpace(check.Error), analyse.colourCodeState(check.Result)})
 					} else {
-						analyse.table.Append([]string{category.Name, trimSpace(check.Description), "", check.Result})
+						analyse.table.Append([]string{category.Name, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
 					}
 				}
 			}
@@ -40,7 +49,7 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 
 		for _, category := range cfg.Categories {
 			for _, check := range category.Checks {
-				analyse.table.Append([]string{category.Name, trimSpace(check.Description), "", check.Result})
+				analyse.table.Append([]string{category.Name, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
 			}
 		}
 
@@ -61,9 +70,9 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 				}
 
 				if len(check.Error) != 0 {
-					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), trimSpace(check.Error), check.Result})
+					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), trimSpace(check.Error), analyse.colourCodeState(check.Result)})
 				} else {
-					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), "", check.Result})
+					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
 				}
 			}
 		}
@@ -99,26 +108,46 @@ func (analyse *Analyse) SetTable() error {
 		table = tablewriter.NewWriter(fileWriter)
 	}
 
-	table.SetHeader([]string{"Components", "Description", "Error Message", "Result"})
 	analyse.table = table
 
 	return nil
 }
 
 func (analyse *Analyse) SetStatus(status bool) {
-	analyse.State = "success"
+	analyse.State = StateSuccess
 	if status {
-		analyse.State = "failed"
+		analyse.State = StateFailure
 	}
 }
 
 func (analyse *Analyse) Render() {
+	analyse.table.SetHeader([]string{"Components", "Description", "Error Message", "Result"})
+
+	if !analyse.NoColor {
+		analyse.table.SetHeaderColor(tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{tablewriter.Bold},
+			tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{tablewriter.Bold})
+	}
+
 	analyse.table.SetAlignment(tablewriter.ALIGN_CENTER) //nolint:nosnakecase
 	analyse.table.SetAutoWrapText(true)
 	analyse.table.SetAutoMergeCells(true)
 	analyse.table.SetRowLine(true)
 
 	analyse.table.SetFooter([]string{"", "", "State", analyse.State})
+
+	if !analyse.NoColor {
+		switch analyse.State {
+		case StateFailure:
+			analyse.table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{},
+				tablewriter.Colors{tablewriter.Bold},
+				tablewriter.Colors{tablewriter.FgRedColor})
+		default:
+			analyse.table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{},
+				tablewriter.Colors{tablewriter.Bold},
+				tablewriter.Colors{tablewriter.FgGreenColor})
+		}
+	}
+
 	analyse.table.Render()
 }
 
@@ -127,4 +156,23 @@ func trimSpace(str string) string {
 	str = strings.TrimSpace(str)
 
 	return str
+}
+
+func (analyse *Analyse) colourCodeState(state string) string {
+	if analyse.NoColor {
+		return state
+	}
+
+	switch state {
+	case StateSuccess:
+		return color.GreenString(state)
+	case StateFailure:
+		return color.RedString(state)
+	case StateWarning:
+		return color.YellowString(state)
+	case StateError:
+		return color.RedString(state)
+	default:
+		return ""
+	}
 }
