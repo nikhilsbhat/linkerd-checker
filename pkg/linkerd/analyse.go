@@ -1,25 +1,24 @@
 package linkerd
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
 	"github.com/nikhilsbhat/linkerd-checker/pkg/errors"
 	"github.com/olekukonko/tablewriter"
 	"github.com/sirupsen/logrus"
+	"github.com/thoas/go-funk"
 )
 
 type Analyse struct {
-	All        bool
-	NoColor    bool
-	Components []string
-	State      string
-	File       string
-	table      *tablewriter.Table
-	logger     *logrus.Logger
+	All           bool
+	NoColor       bool
+	Components    []string
+	NotComponents []string
+	State         string
+	File          string
+	table         *tablewriter.Table
+	logger        *logrus.Logger
 }
 
 const (
@@ -29,34 +28,30 @@ const (
 	StateError   = "error"
 )
 
-func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
-	if analyse.All {
-		if !cfg.Success {
-			analyse.logger.Error("not all linkerd checks have succeeded")
+type CheckIterator []Check
 
-			for _, category := range cfg.Categories {
-				for _, check := range category.Checks {
-					if len(check.Error) != 0 {
-						analyse.table.Append([]string{category.Name, trimSpace(check.Description), trimSpace(check.Error), analyse.colourCodeState(check.Result)})
-					} else {
-						analyse.table.Append([]string{category.Name, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
-					}
-				}
+func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
+	var failed bool
+
+	if analyse.All {
+		for _, category := range cfg.Categories {
+			if funk.Contains(analyse.NotComponents, category.Name) {
+				analyse.logger.Debugf("ignoring linkerd component '%s' from checks since it is on ignore list", category.Name)
+
+				continue
 			}
 
-			return true, &errors.CheckerError{Message: "analysing linkerd checks failed"}
+			failed = NewIterator(category.Checks).Iterator(category.Name, analyse)
 		}
 
-		for _, category := range cfg.Categories {
-			for _, check := range category.Checks {
-				analyse.table.Append([]string{category.Name, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
-			}
+		if failed {
+			analyse.logger.Error("not all linkerd checks have succeeded")
+
+			return failed, &errors.CheckerError{Message: "analysing linkerd checks failed"}
 		}
 
 		return false, nil
 	}
-
-	var failed bool
 
 	for _, category := range analyse.Components {
 		for _, cat := range cfg.Categories {
@@ -64,17 +59,7 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 				continue
 			}
 
-			for _, check := range cat.Checks {
-				if check.Result == "error" {
-					failed = true
-				}
-
-				if len(check.Error) != 0 {
-					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), trimSpace(check.Error), analyse.colourCodeState(check.Result)})
-				} else {
-					analyse.table.Append([]string{cat.Name, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
-				}
-			}
+			failed = NewIterator(cat.Checks).Iterator(cat.Name, analyse)
 		}
 	}
 
@@ -85,32 +70,28 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 	return failed, nil
 }
 
-func (analyse *Analyse) SetTable() error {
-	table := tablewriter.NewWriter(os.Stdout)
+func (checks CheckIterator) Iterator(category string, analyse *Analyse) bool {
+	var failed bool
 
-	if len(analyse.File) != 0 {
-		analyse.logger.Debugf("to-file is enabled, the output would be rendered to file '%s'", analyse.File)
-
-		absPath, err := filepath.Abs(analyse.File)
-		if err != nil {
-			analyse.logger.Errorf("fetching absolute filepath of '%s' errored with: %s", analyse.File, err.Error())
-
-			return fmt.Errorf("%w", err)
+	for _, check := range checks {
+		if check.Result == "error" {
+			failed = true
 		}
 
-		fileWriter, err := os.Create(absPath)
-		if err != nil {
-			analyse.logger.Errorf("creating file '%s' errored with: %s", analyse.File, err.Error())
+		if len(check.Error) != 0 {
+			analyse.table.Append([]string{category, trimSpace(check.Description), trimSpace(check.Error), analyse.colourCodeState(check.Result)})
 
-			return fmt.Errorf("%w", err)
+			continue
 		}
 
-		table = tablewriter.NewWriter(fileWriter)
+		analyse.table.Append([]string{category, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
 	}
 
-	analyse.table = table
+	return failed
+}
 
-	return nil
+func NewIterator(check []Check) CheckIterator {
+	return check
 }
 
 func (analyse *Analyse) SetStatus(status bool) {
@@ -118,37 +99,6 @@ func (analyse *Analyse) SetStatus(status bool) {
 	if status {
 		analyse.State = StateFailure
 	}
-}
-
-func (analyse *Analyse) Render() {
-	analyse.table.SetHeader([]string{"Components", "Description", "Error Message", "Result"})
-
-	if !analyse.NoColor {
-		analyse.table.SetHeaderColor(tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{tablewriter.Bold},
-			tablewriter.Colors{tablewriter.Bold}, tablewriter.Colors{tablewriter.Bold})
-	}
-
-	analyse.table.SetAlignment(tablewriter.ALIGN_CENTER) //nolint:nosnakecase
-	analyse.table.SetAutoWrapText(true)
-	analyse.table.SetAutoMergeCells(true)
-	analyse.table.SetRowLine(true)
-
-	analyse.table.SetFooter([]string{"", "", "State", analyse.State})
-
-	if !analyse.NoColor {
-		switch analyse.State {
-		case StateFailure:
-			analyse.table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{},
-				tablewriter.Colors{tablewriter.Bold},
-				tablewriter.Colors{tablewriter.FgRedColor})
-		default:
-			analyse.table.SetFooterColor(tablewriter.Colors{}, tablewriter.Colors{},
-				tablewriter.Colors{tablewriter.Bold},
-				tablewriter.Colors{tablewriter.FgGreenColor})
-		}
-	}
-
-	analyse.table.Render()
 }
 
 func trimSpace(str string) string {

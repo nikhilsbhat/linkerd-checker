@@ -8,6 +8,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
+	github.com/thoas/go-funk v0.9.3
 )
 
 require (
