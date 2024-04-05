@@ -10,13 +10,15 @@ command-line utility for analyse linkerd check's [output](https://linkerd.io/2.1
 
 ## Introduction
 
-Why `linkerd-checker` when we already have `linkerd check`? </br> Yes, the `check` command in `linkerd` does the work. But running the checks against certain categories is not working at the moment.
+Why use `linkerd-checker` when we already have `linkerd check`? </br> While the `check` command in `linkerd` serves its purpose, it currently lacks the functionality to run checks against specific categories.
 
-What does it mean to us? If I want to run the checks post-installation of `linkerd` in our environment, we are forced to run all checks. </br>And we do not have a native way to ignore certain components or categories while running checks.
+What does this mean for us? If we wish to conduct checks after installing `linkerd` in our environment, we're obliged to run all checks without the ability to selectively ignore certain components or categories.
 
-`linkerd` has a way to generate the output of tests as JSON, and the `linkerd-checker` leverages this and helps in filtering the output based on selected categories so that one can run or fail tests only for the selected components.
+`linkerd` does provide a means to generate test output in JSON format, and `linkerd-checker` takes advantage of this by allowing users to filter the output based on chosen categories.
 
-This might not help everyone, but it will definitely help some groups that are considering testing `linkerd` post-installation.
+This enables users to run or fail tests only for selected components.
+
+While this may not be beneficial to everyone, it can certainly aid certain groups that intend to test linkerd post-installation.
 
 ## Requirements
 
