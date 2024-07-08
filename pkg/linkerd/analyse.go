@@ -44,47 +44,41 @@ func (analyse *Analyse) Analyse(cfg *CheckConfig) (bool, error) {
 			failed = NewIterator(category.Checks).Iterator(category.Name, analyse)
 		}
 
-		if failed {
-			analyse.logger.Error("not all linkerd checks have succeeded")
-
-			return failed, &errors.CheckerError{Message: "analysing linkerd checks failed"}
-		}
-
 		return false, nil
-	}
+	} else {
+		for _, category := range analyse.Components {
+			for _, cat := range cfg.Categories {
+				if cat.Name != category {
+					continue
+				}
 
-	for _, category := range analyse.Components {
-		for _, cat := range cfg.Categories {
-			if cat.Name != category {
-				continue
+				failed = NewIterator(cat.Checks).Iterator(cat.Name, analyse)
 			}
-
-			failed = NewIterator(cat.Checks).Iterator(cat.Name, analyse)
 		}
 	}
 
 	if failed {
+		analyse.logger.Error("not all linkerd checks have succeeded")
+
 		return failed, &errors.CheckerError{Message: "analysing linkerd checks failed"}
 	}
 
-	return failed, nil
+	return false, nil
 }
 
 func (checks CheckIterator) Iterator(category string, analyse *Analyse) bool {
 	var failed bool
 
 	for _, check := range checks {
-		if check.Result == "error" {
+		if check.Result == StateError {
 			failed = true
 		}
 
-		if len(check.Error) != 0 {
-			analyse.table.Append([]string{category, trimSpace(check.Description), trimSpace(check.Error), analyse.colourCodeState(check.Result)})
+		description := trimSpace(check.Description)
+		errorMsg := trimSpace(check.Error)
+		coloredState := analyse.colourCodeState(check.Result)
 
-			continue
-		}
-
-		analyse.table.Append([]string{category, trimSpace(check.Description), "", analyse.colourCodeState(check.Result)})
+		analyse.table.Append([]string{category, description, errorMsg, coloredState})
 	}
 
 	return failed
@@ -95,17 +89,15 @@ func NewIterator(check []Check) CheckIterator {
 }
 
 func (analyse *Analyse) SetStatus(status bool) {
-	analyse.State = StateSuccess
 	if status {
 		analyse.State = StateFailure
+	} else {
+		analyse.State = StateSuccess
 	}
 }
 
 func trimSpace(str string) string {
-	str = strings.ReplaceAll(str, "\t", "")
-	str = strings.TrimSpace(str)
-
-	return str
+	return strings.TrimSpace(strings.ReplaceAll(str, "\t", ""))
 }
 
 func (analyse *Analyse) colourCodeState(state string) string {
@@ -116,13 +108,11 @@ func (analyse *Analyse) colourCodeState(state string) string {
 	switch state {
 	case StateSuccess:
 		return color.GreenString(state)
-	case StateFailure:
+	case StateFailure, StateError:
 		return color.RedString(state)
 	case StateWarning:
 		return color.YellowString(state)
-	case StateError:
-		return color.RedString(state)
 	default:
-		return ""
+		return state
 	}
 }

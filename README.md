@@ -50,7 +50,20 @@ Updated documentation on all available commands and flags can be found [here](ht
 ## Installation
 
 * Recommend installing released versions. Release binaries are available on the [releases](https://github.com/nikhilsbhat/linkerd-checker/releases) page.
-* Can always build it locally by running `go build` against cloned repo.
+
+#### Homebrew
+
+Install latest version on `linkerd-checker` on `macOS`
+
+```shell
+brew tap nikshilsbhat/stable git@github.com:nikhilsbhat/homebrew-stable.git
+# for latest version
+brew install nikshilsbhat/stable/linkerd-checker
+# for specific version
+brew install nikshilsbhat/stable/linkerd-checker@0.0.3
+```
+
+Check [repo](https://github.com/nikhilsbhat/homebrew-stable) for all available versions of the formula.
 
 #### Docker
 
@@ -61,3 +74,15 @@ found there. </br>
 docker pull ghcr.io/nikhilsbhat/linkerd-checker:latest
 docker pull ghcr.io/nikhilsbhat/linkerd-checker:<github-release-tag>
 ```
+
+#### Build from Source
+
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/nikhilsbhat/linkerd-checker.git
+    cd linkerd-checker
+    ```
+2. Build the project:
+    ```sh
+    make local.build
+    ```
